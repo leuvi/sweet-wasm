@@ -6,14 +6,19 @@ export function useWasm() {
   const { loaded, loading, error, setLoaded, setLoading, setError } = useWasmStore()
 
   useEffect(() => {
-    if (loaded || loading) return
+    if (loaded || loading || error) return
 
     setLoading(true)
 
     wasmBridge.init()
       .then(() => setLoaded())
       .catch((err) => setError(err.message))
-  }, [loaded, loading, setLoaded, setLoading, setError])
+  }, [loaded, loading, error, setLoaded, setLoading, setError])
+
+  /** 手动重试初始化（失败后调用） */
+  const retry = useCallback(() => {
+    useWasmStore.setState({ loaded: false, loading: false, error: null })
+  }, [])
 
   /** Worker 线程调用（异步，不阻塞 UI） */
   const callWorker = useCallback(
@@ -31,5 +36,5 @@ export function useWasm() {
     [],
   )
 
-  return { callWorker, callMain, loaded, loading, error }
+  return { callWorker, callMain, loaded, loading, error, retry }
 }

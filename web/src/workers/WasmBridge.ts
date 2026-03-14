@@ -18,7 +18,7 @@ class WasmBridge {
       this.initMain(),
       this.initWorker(),
     ]).then(() => {}).catch((err) => {
-      this.initPromise = null
+      this.cleanup()
       throw err
     })
 
@@ -44,6 +44,11 @@ class WasmBridge {
   }
 
   terminate() {
+    this.cleanup()
+  }
+
+  /** 统一清理：terminate Worker、清空状态，允许后续重试 */
+  private cleanup() {
     this.worker?.terminate()
     this.worker = null
     this.wasmModule = null

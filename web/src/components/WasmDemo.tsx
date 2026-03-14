@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useWasm } from '../hooks/useWasm'
 
 export function WasmDemo() {
-  const { callWorker, callMain, loaded, loading, error } = useWasm()
+  const { callWorker, callMain, loaded, loading, error, retry } = useWasm()
   const [name, setName] = useState('World')
   const [fibN, setFibN] = useState(10)
   const [greetResult, setGreetResult] = useState('')
@@ -20,7 +20,12 @@ export function WasmDemo() {
   }, [loaded, fibN, callWorker])
 
   if (loading) return <p>Loading WASM module...</p>
-  if (error) return <p className="error">Failed to load WASM: {error}</p>
+  if (error) return (
+    <div className="error">
+      <p>Failed to load WASM: {error}</p>
+      <button onClick={retry}>Retry</button>
+    </div>
+  )
   if (!loaded) return null
 
   return (

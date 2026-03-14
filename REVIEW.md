@@ -3,12 +3,14 @@
 日期：2026-03-14
 范围：`wasm-lib/` 与 `web/`（只读审查，无代码改动）
 
-## 结论概览
+> 说明：本文件保留第一次 Review 全量内容，不删除；并在文末追加第二次 Review 结果与待优化项。
+
+## 第一次 Review 结论概览（保留，不删除）
 
 - 生产构建和基础单元测试可通过。
 - 存在 1 个高风险问题、4 个中风险问题，主要集中在 WASM 初始化失败兜底、异步异常收敛、资源释放与边界输入策略。
 
-## 发现（按严重级别）
+## 第一次 Review 发现（按严重级别，保留）
 
 ### 1. 高风险：WASM 初始化失败时可能永久 Loading
 
@@ -83,7 +85,7 @@
 建议：
 - 在 CI 中加入 `wasm-pack test --headless --chrome`（或等价 runner）确保执行。
 
-## 验证记录
+## 第一次 Review 验证记录（保留）
 
 ### 已执行命令
 
@@ -99,3 +101,78 @@
 ## 备注
 
 - 本报告按你的要求仅做审查，不包含任何代码修改。
+
+## 第二次 Review 结果（本次需优化）
+
+复审时间：2026-03-14（同日增量复审）
+范围：基于你“已改动一版”的增量代码进行复核。
+
+### 状态对照（第一次 -> 第二次）
+
+- 已修复：初始化失败无兜底（已新增 `init_error` 与超时）
+- 已修复：Blur 缺少 `finally` 导致 UI 可能卡死
+- 已修复：Object URL 未释放导致内存泄漏
+- 已优化：`fibonacci` 改为饱和加法，避免溢出回绕
+- 仍待优化：初始化超时后的 Worker 清理与失败重试策略
+- 仍待优化：wasm 浏览器测试未接入实际执行链
+
+### 第二次 Review 发现（按严重级别）
+
+#### 1. 高风险：初始化超时后遗留 Worker，重试会叠加后台线程
+
+- 文件：`web/src/workers/WasmBridge.ts:77`
+- 文件：`web/src/workers/WasmBridge.ts:93`
+- 文件：`web/src/workers/WasmBridge.ts:63`
+
+问题描述：
+- 超时分支只 `reject`，未移除监听且未 `terminate` 当前 Worker。
+- 后续再次 `init()` 会新建 Worker，旧 Worker 可能继续存活。
+
+影响：
+- 存在后台线程累积、内存/CPU 增长风险，且会增加定位难度。
+
+建议：
+- 在超时/初始化失败路径执行统一清理：移除监听、`terminate` Worker、清空引用。
+- 对 `initWorker()` 增加幂等失败收敛逻辑，避免重复残留。
+
+#### 2. 中风险：初始化失败后自动快速重试，可能形成错误风暴
+
+- 文件：`web/src/hooks/useWasm.ts:8`
+- 文件：`web/src/hooks/useWasm.ts:15`
+
+问题描述：
+- 初始化失败后 `loading` 被置回 `false`，effect 条件再次满足，可能立即再次重试。
+
+影响：
+- 在持续失败场景（资源不可达/网络异常）下会高频重试，增加资源消耗并干扰排障。
+
+建议：
+- 增加重试节流策略（指数退避或上限次数），或改为用户手动触发重试。
+
+#### 3. 中风险：wasm 浏览器测试文件存在，但仍未进入执行链
+
+- 文件：`wasm-lib/tests/web.rs:6`
+- 文件：`README.md`
+
+问题描述：
+- 复审执行 `cargo test` 仍显示 `tests/web.rs` 为 `running 0 tests`。
+
+影响：
+- 浏览器环境下的 wasm 行为仍缺乏自动化回归保障。
+
+建议：
+- 在本地脚本与 CI 增加 `wasm-pack test --headless --chrome`（或等价 runner）。
+- 在 README 增加“单元测试”和“浏览器 wasm 测试”两条独立命令说明。
+
+### 第二次 Review 验证记录
+
+已执行命令：
+
+- `cd web && pnpm exec tsc --noEmit && pnpm build`
+- `cd wasm-lib && cargo test`
+
+结果摘要：
+
+- Web 类型检查与构建通过。
+- Rust 单元测试通过。
+- `wasm-lib/tests/web.rs` 仍未在 `cargo test` 中执行（显示 0 tests）。
