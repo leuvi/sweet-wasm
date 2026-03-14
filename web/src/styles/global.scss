@@ -1,0 +1,116 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: $font-family;
+  color: $text-color;
+  background-color: $bg-color;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+#app {
+  max-width: 800px;
+  width: 100%;
+  padding: 2rem;
+}
+
+.app {
+  text-align: center;
+
+  h1 {
+    margin-bottom: 2rem;
+    color: $primary-color;
+  }
+}
+
+.wasm-demo {
+  text-align: left;
+}
+
+.demo-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+
+  h2 {
+    color: $primary-color;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+  }
+
+  input {
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #555;
+    background: #1a1a1a;
+    color: $text-color;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .result {
+    font-family: monospace;
+    padding: 0.5rem;
+    background: #1a1a1a;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+  }
+}
+
+.error {
+  color: #ff6b6b;
+}
+
+.blur-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  input[type="range"] {
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
+
+  button {
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+    border: 1px solid $primary-color;
+    background: transparent;
+    color: $primary-color;
+    cursor: pointer;
+    font-size: 0.9rem;
+
+    &:hover:not(:disabled) {
+      background: $primary-color;
+      color: #fff;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.blur-canvas {
+  max-width: 100%;
+  border-radius: 4px;
+  background: #1a1a1a;
+}
