@@ -1,26 +1,34 @@
 import { useEffect, useCallback } from 'react'
-import { useWasmStore } from '../store/useWasmStore'
+import { create } from 'zustand'
 import { wasmBridge } from '../workers/WasmBridge'
 
+const useWasmStore = create<{
+  loaded: boolean
+  loading: boolean
+  error: string | null
+}>(() => ({
+  loaded: false,
+  loading: false,
+  error: null,
+}))
+
 export function useWasm() {
-  const { loaded, loading, error, setLoaded, setLoading, setError } = useWasmStore()
+  const { loaded, loading, error } = useWasmStore()
 
   useEffect(() => {
     if (loaded || loading || error) return
 
-    setLoading(true)
+    useWasmStore.setState({ loading: true })
 
     wasmBridge.init()
-      .then(() => setLoaded())
-      .catch((err) => setError(err.message))
-  }, [loaded, loading, error, setLoaded, setLoading, setError])
+      .then(() => useWasmStore.setState({ loaded: true, loading: false }))
+      .catch((err) => useWasmStore.setState({ error: err.message, loading: false }))
+  }, [loaded, loading, error])
 
-  /** 手动重试初始化（失败后调用） */
   const retry = useCallback(() => {
     useWasmStore.setState({ loaded: false, loading: false, error: null })
   }, [])
 
-  /** Worker 线程调用（异步，不阻塞 UI） */
   const callWorker = useCallback(
     <T = any>(fn: string, ...args: any[]): Promise<T> => {
       return wasmBridge.callWorker<T>(fn, ...args)
@@ -28,7 +36,6 @@ export function useWasm() {
     [],
   )
 
-  /** 主线程调用（同步，适合轻量计算） */
   const callMain = useCallback(
     <T = any>(fn: string, ...args: any[]): T => {
       return wasmBridge.callMain<T>(fn, ...args)
