@@ -20,3 +20,19 @@
 1. 修改 `wasm-lib/src/` 后执行 `cd wasm-lib && wasm-pack build --target web`
 2. 前端 `cd web && pnpm dev` 自动加载更新后的 wasm
 3. 新增 wasm 函数需在 `web/src/workers/wasm.worker.ts` 的 `fns` 中注册
+
+## 常用命令
+
+```bash
+# 构建 WASM
+cd wasm-lib && wasm-pack build --target web
+
+# 启动前端
+cd web && pnpm dev
+
+# Rust 单元测试
+cd wasm-lib && cargo test
+
+# 前端类型检查
+cd web && npx tsc --noEmit
+```
