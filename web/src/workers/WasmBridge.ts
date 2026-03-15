@@ -34,12 +34,12 @@ class WasmBridge {
   }
 
   /** Worker 线程异步调用（耗时计算用） */
-  callWorker<T = any>(fn: string, ...args: any[]): Promise<T> {
+  callWorker<T = any>(fn: string, args: any[], transfers?: Transferable[]): Promise<T> {
     if (!this.worker) throw new Error('Worker not initialized, call init() first')
     const id = this.callId++
     return new Promise((resolve, reject) => {
       this.callbacks.set(id, { resolve, reject })
-      this.worker!.postMessage({ id, fn, args })
+      this.worker!.postMessage({ id, fn, args }, transfers ?? [])
     })
   }
 

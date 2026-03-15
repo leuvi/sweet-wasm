@@ -30,8 +30,8 @@ export function useWasm() {
   }, [])
 
   const callWorker = useCallback(
-    <T = any>(fn: string, ...args: any[]): Promise<T> => {
-      return wasmBridge.callWorker<T>(fn, ...args)
+    <T = any>(fn: string, args: any[], transfers?: Transferable[]): Promise<T> => {
+      return wasmBridge.callWorker<T>(fn, args, transfers)
     },
     [],
   )

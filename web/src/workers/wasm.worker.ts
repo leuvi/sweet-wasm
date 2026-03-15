@@ -1,6 +1,6 @@
-import init, { greet, add, fibonacci, blur } from 'wasm-lib'
+import init, { blur, oil_painting, infrared, night_vision, grayscale } from 'wasm-lib'
 
-const fns: Record<string, Function> = { greet, add, fibonacci, blur }
+const fns: Record<string, Function> = { blur, oil_painting, infrared, night_vision, grayscale }
 
 let ready = false
 const pending: MessageEvent[] = []
@@ -17,8 +17,19 @@ init().then(() => {
 function handleMessage(e: MessageEvent) {
   const { id, fn, args } = e.data
   try {
-    const result = fns[fn](...args)
-    self.postMessage({ type: 'result', id, result })
+    // ArrayBuffer → Uint8Array for wasm functions
+    const resolvedArgs = args.map((arg: any) =>
+      arg instanceof ArrayBuffer ? new Uint8Array(arg) : arg
+    )
+    const result = fns[fn](...resolvedArgs)
+
+    // Uint8Array result → transfer buffer back
+    if (result instanceof Uint8Array) {
+      const buffer = result.buffer as ArrayBuffer
+      ;(self as unknown as Worker).postMessage({ type: 'result', id, result: buffer }, [buffer])
+    } else {
+      self.postMessage({ type: 'result', id, result })
+    }
   } catch (err: any) {
     self.postMessage({ type: 'error', id, error: err.message })
   }
