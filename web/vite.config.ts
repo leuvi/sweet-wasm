@@ -18,6 +18,7 @@ export default defineConfig({
     },
   },
   server: {
+    port: 8050,
     fs: {
       allow: [
         resolve(__dirname, '..'),
